@@ -9,6 +9,11 @@ export class UserResolver {
     return "server is working dawg";
   }
 
+  @Query(() => [User])
+  users() {
+    return User.find();
+  }
+
   @Mutation(() => Boolean)
   async register(
     @Arg("email") email: string,
