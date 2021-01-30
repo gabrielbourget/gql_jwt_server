@@ -1,12 +1,12 @@
 // -> Beyond codebase
 import { compare, hash } from "bcryptjs";
-import { sign } from "jsonwebtoken"
 import {
   Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver
 } from "type-graphql";
 // -> Within codebase
 import { User } from "./entity/User";
 import { Context } from "./Context";
+import { createAccessToken, createRefreshToken } from "./helpers";
 
 @ObjectType()
 class LoginResponse {
@@ -50,25 +50,13 @@ export class UserResolver {
     @Ctx() { res }: Context
   ): Promise<LoginResponse> {
     const user = await User.findOne({ where: { email }});
-
     if (!user) throw new Error("Could not find user");
 
     const passwordValid = await compare(password, user.password);
-
     if (!passwordValid) throw new Error("Invalid password");
 
-    res.cookie("ssrt", sign(
-      { userId: user.id },
-      "asdjans;dobfaskjdfbas;kdfjb",
-      { expiresIn: "7d" }),
-    { httpOnly: true });
+    res.cookie("rt", createRefreshToken(user), { httpOnly: true });
 
-    return {
-      accessToken: sign(
-        { userId: user.id, email: user.email },
-        "sl;akdfnlw;iafne;ioanwasdjfasdfadf",
-        { expiresIn: "15m"}
-      )
-    };
+    return { accessToken: createAccessToken(user) };
   }
 }
