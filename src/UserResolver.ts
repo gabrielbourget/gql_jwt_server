@@ -1,12 +1,12 @@
 // -> Beyond codebase
 import { compare, hash } from "bcryptjs";
 import {
-  Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver
+  Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver, UseMiddleware
 } from "type-graphql";
 // -> Within codebase
 import { User } from "./entity/User";
-import { Context } from "./Context";
-import { createAccessToken, createRefreshToken } from "./helpers";
+import { Context } from "./Types/Context";
+import { createAccessToken, createRefreshToken, isAuthorized } from "./helpers";
 
 @ObjectType()
 class LoginResponse {
@@ -19,6 +19,12 @@ export class UserResolver {
   @Query(() => String)
   hello() {
     return "server is working dawg";
+  }
+  
+  @Query(() => String)
+  @UseMiddleware(isAuthorized)
+  currentUserId(@Ctx() { payload }: Context) {
+    return `Current user ID is ${payload?.userId}`;
   }
 
   @Query(() => [User])
