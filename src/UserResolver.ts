@@ -1,10 +1,12 @@
+// -> Beyond codebase
 import { compare, hash } from "bcryptjs";
-import { User } from "./entity/User";
 import { sign } from "jsonwebtoken"
 import {
-  Arg, Field, Mutation, ObjectType, Query, Resolver
+  Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver
 } from "type-graphql";
-
+// -> Within codebase
+import { User } from "./entity/User";
+import { Context } from "./Context";
 
 @ObjectType()
 class LoginResponse {
@@ -44,7 +46,8 @@ export class UserResolver {
   @Mutation(() => LoginResponse)
   async login(
     @Arg("email") email: string,
-    @Arg("password") password: string
+    @Arg("password") password: string,
+    @Ctx() { res }: Context
   ): Promise<LoginResponse> {
     const user = await User.findOne({ where: { email }});
 
@@ -54,10 +57,16 @@ export class UserResolver {
 
     if (!passwordValid) throw new Error("Invalid password");
 
+    res.cookie("ssrt", sign(
+      { userId: user.id },
+      "asdjans;dobfaskjdfbas;kdfjb",
+      { expiresIn: "7d" }),
+    { httpOnly: true });
+
     return {
       accessToken: sign(
         { userId: user.id, email: user.email },
-        "asdfasdfasdf",
+        "sl;akdfnlw;iafne;ioanwasdjfasdfadf",
         { expiresIn: "15m"}
       )
     };
