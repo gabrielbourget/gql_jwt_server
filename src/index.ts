@@ -3,6 +3,7 @@ import "reflect-metadata";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
+import { createConnection } from "typeorm";
 // -> Within Codebase
 import { UserResolver } from "./UserResolver";
 
@@ -11,6 +12,8 @@ const PORT = 4000;
 (async () => {
   const app = express();
   app.get("/", (_, res) => res.send("boop"));
+
+  await createConnection();
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
