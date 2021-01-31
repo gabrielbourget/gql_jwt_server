@@ -1,7 +1,7 @@
 // -> Beyond codebase
 import { compare, hash } from "bcryptjs";
 import {
-  Arg, Ctx, Field, Mutation, ObjectType, Query, Resolver, UseMiddleware
+  Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, UseMiddleware
 } from "type-graphql";
 // -> Within codebase
 import { User } from "./entity/User";
@@ -9,6 +9,7 @@ import { Context } from "./Types/Context";
 import {
   createAccessToken, createRefreshToken, isAuthorized, setRefreshTokenCookie
 } from "./helpers";
+import { getConnection } from "typeorm";
 
 @ObjectType()
 class LoginResponse {
@@ -47,6 +48,17 @@ export class UserResolver {
       console.log(err);
       return false;
     }
+
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async revokeRefreshTokensForUser(
+    @Arg("userId", () => Int) userId: number
+  ) {
+    await getConnection()
+      .getRepository(User)
+      .increment({ id: userId }, "tokenVersion", 1)
 
     return true;
   }

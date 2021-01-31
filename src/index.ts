@@ -36,6 +36,10 @@ const { REFRESH_TOKEN_SECRET } = process.env;
 
     if (!user) return res.send({ ok: false, accessToken: null });
 
+    if (user.tokenVersion !== payload.tokenVersion) {
+      return res.send({ ok: false, accessToken: null });
+    }
+
     setRefreshTokenCookie(res, createRefreshToken(user));
 
     return res.send({ ok: true, accessToken: createAccessToken(user) });

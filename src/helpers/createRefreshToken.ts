@@ -6,7 +6,7 @@ const { REFRESH_TOKEN_SECRET } = process.env;
 
 export const createRefreshToken = (user: User) => {
   return sign(
-    { userId: user.id },
+    { userId: user.id, tokenVersion: user.tokenVersion },
     `${REFRESH_TOKEN_SECRET}`,
     { expiresIn: REFRESH_JWT_LIFETIME }
   );
