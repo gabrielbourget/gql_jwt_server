@@ -6,7 +6,9 @@ import {
 // -> Within codebase
 import { User } from "./entity/User";
 import { Context } from "./Types/Context";
-import { createAccessToken, createRefreshToken, isAuthorized } from "./helpers";
+import {
+  createAccessToken, createRefreshToken, isAuthorized, setRefreshTokenCookie
+} from "./helpers";
 
 @ObjectType()
 class LoginResponse {
@@ -61,7 +63,7 @@ export class UserResolver {
     const passwordValid = await compare(password, user.password);
     if (!passwordValid) throw new Error("Invalid password");
 
-    res.cookie("rt", createRefreshToken(user), { httpOnly: true });
+    setRefreshTokenCookie(res, createRefreshToken(user));
 
     return { accessToken: createAccessToken(user) };
   }

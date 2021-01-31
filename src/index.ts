@@ -5,14 +5,41 @@ import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
+import cookieParser from "cookie-parser";
+import { verify } from "jsonwebtoken";
 // -> Within Codebase
 import { UserResolver } from "./UserResolver";
+import { REFRESH_TOKEN_COOKIE_KEY, SERVER_PORT } from "./constants";
+import { User } from "./entity/User";
+import { createAccessToken, createRefreshToken, setRefreshTokenCookie } from "./helpers";
 
-const PORT = 4000;
+const { REFRESH_TOKEN_SECRET } = process.env;
 
 (async () => {
   const app = express();
+  app.use(cookieParser());
   app.get("/", (_, res) => res.send("boop"));
+
+  app.post("/refresh_token", async (req, res) => {
+    const token = req.cookies[REFRESH_TOKEN_COOKIE_KEY];
+    if (!token) return res.send({ ok: false, accessToken: null });
+    
+    let payload: any = null;
+    try {
+      payload = verify(token, REFRESH_TOKEN_SECRET!);
+    } catch (err) {
+      console.log(err);
+      return res.send({ ok: false, accessToken: null });
+    }
+
+    const user: User | undefined = await User.findOne({ id: payload.userId });
+
+    if (!user) return res.send({ ok: false, accessToken: null });
+
+    setRefreshTokenCookie(res, createRefreshToken(user));
+
+    return res.send({ ok: true, accessToken: createAccessToken(user) });
+  });
 
   await createConnection();
 
@@ -25,7 +52,7 @@ const PORT = 4000;
 
   apolloServer.applyMiddleware({ app });
 
-  app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));
+  app.listen(SERVER_PORT, () => console.log(`Server is listening on port ${SERVER_PORT}`));
 })();
 
 // createConnection().then(async connection => {
