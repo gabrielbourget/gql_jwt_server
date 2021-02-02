@@ -3,14 +3,16 @@ import { compare, hash } from "bcryptjs";
 import {
   Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, UseMiddleware
 } from "type-graphql";
+import { getConnection } from "typeorm";
+import { verify } from "jsonwebtoken";
 // -> Within codebase
 import { User } from "./entity/User";
 import { Context } from "./Types/Context";
 import {
   createAccessToken, createRefreshToken, isAuthorized, setRefreshTokenCookie
 } from "./helpers";
-import { getConnection } from "typeorm";
 
+const { ACCESS_TOKEN_SECRET } = process.env;
 @ObjectType()
 class LoginResponse {
   @Field()
@@ -34,6 +36,24 @@ export class UserResolver {
   @UseMiddleware(isAuthorized)
   users() {
     return User.find();
+  }
+
+  @Query(() => User, { nullable: true })
+  @UseMiddleware(isAuthorized) // - DEV NOTE -> Could be overkill to have auth logic in the function if it has to be authorized.
+  async me (@Ctx() context: Context) {
+    const authorization = context.req.headers["authorization"];
+
+    if (!authorization) return null;
+
+    try {
+      const token = authorization.split(" ")[1];
+      const payload: any = verify(token, ACCESS_TOKEN_SECRET!);
+      return await User.findOne(payload.userId);
+      return 
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
   }
 
   @Mutation(() => Boolean)
