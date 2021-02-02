@@ -7,7 +7,7 @@ import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import cookieParser from "cookie-parser";
 import { verify } from "jsonwebtoken";
-import cors from "cors";
+// import cors from "cors";
 // -> Within Codebase
 import { UserResolver } from "./UserResolver";
 import { REFRESH_TOKEN_COOKIE_KEY, SERVER_PORT } from "./constants";
@@ -20,11 +20,11 @@ const { REFRESH_TOKEN_SECRET, CLIENT_URL } = process.env;
 (async () => {
   const app = express();
   // - TODO: -> CORS Seems to be set up properly on FE and BE, still showing errors.
-  app.use(cors({
-    origin: CLIENT_URL,
-    // origin: "*",
-    credentials: true,
-  }));
+  // app.use(cors({
+  //   origin: CLIENT_URL,
+  //   // origin: "*",
+  //   credentials: true,
+  // }));
   app.use(cookieParser());
   app.get("/", (_, res) => res.send("boop"));
 
