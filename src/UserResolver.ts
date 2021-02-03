@@ -40,7 +40,7 @@ export class UserResolver {
 
   @Query(() => User, { nullable: true })
   @UseMiddleware(isAuthorized) // - DEV NOTE -> Could be overkill to have auth logic in the function if it has to be authorized.
-  async me (@Ctx() context: Context) {
+  async Me (@Ctx() context: Context) {
     const authorization = context.req.headers["authorization"];
 
     if (!authorization) return null;
