@@ -73,17 +73,6 @@ export class UserResolver {
     return true;
   }
 
-  @Mutation(() => Boolean)
-  async revokeRefreshTokensForUser(
-    @Arg("userId", () => Int) userId: number
-  ) {
-    await getConnection()
-      .getRepository(User)
-      .increment({ id: userId }, "tokenVersion", 1)
-
-    return true;
-  }
-
   @Mutation(() => LoginResponse)
   async login(
     @Arg("email") email: string,
@@ -99,5 +88,22 @@ export class UserResolver {
     setRefreshTokenCookie(res, createRefreshToken(user));
 
     return { accessToken: createAccessToken(user) };
+  }
+
+  @Mutation(() => Boolean)
+  async logout(@Ctx() { res }: Context) {
+    setRefreshTokenCookie(res, "");
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async revokeRefreshTokensForUser(
+    @Arg("userId", () => Int) userId: number
+  ) {
+    await getConnection()
+      .getRepository(User)
+      .increment({ id: userId }, "tokenVersion", 1)
+
+    return true;
   }
 }
