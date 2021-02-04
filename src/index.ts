@@ -10,7 +10,7 @@ import { verify } from "jsonwebtoken";
 // import cors from "cors";
 // -> Within Codebase
 import { UserResolver } from "./UserResolver";
-import { REFRESH_TOKEN_COOKIE_KEY, SERVER_PORT } from "./constants";
+import { REFRESH_TOKEN_COOKIE_KEY, REFRESH_TOKEN_ROUTE, SERVER_PORT } from "./constants";
 import { User } from "./entity/User";
 import { createAccessToken, createRefreshToken, setRefreshTokenCookie } from "./helpers";
 
@@ -28,7 +28,7 @@ const { REFRESH_TOKEN_SECRET, CLIENT_URL } = process.env;
   app.use(cookieParser());
   app.get("/", (_, res) => res.send("boop"));
 
-  app.post("/refresh_token", async (req, res) => {
+  app.post(REFRESH_TOKEN_ROUTE, async (req, res) => {
     const token = req.cookies[REFRESH_TOKEN_COOKIE_KEY];
 
     if (!token) return res.send({ ok: false, accessToken: null });

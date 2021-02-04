@@ -11,6 +11,7 @@ import { Context } from "./Types/Context";
 import {
   createAccessToken, createRefreshToken, isAuthorized, setRefreshTokenCookie
 } from "./helpers";
+import { REFRESH_TOKEN_COOKIE_KEY } from "./constants";
 
 const { ACCESS_TOKEN_SECRET } = process.env;
 @ObjectType()
@@ -92,7 +93,9 @@ export class UserResolver {
 
   @Mutation(() => Boolean)
   async logout(@Ctx() { res }: Context) {
+    console.log("In Logout()");
     setRefreshTokenCookie(res, "");
+    res.clearCookie(REFRESH_TOKEN_COOKIE_KEY);
     return true;
   }
 
