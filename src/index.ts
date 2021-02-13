@@ -26,8 +26,10 @@ const { REFRESH_TOKEN_SECRET, CLIENT_URL } = process.env;
   //   credentials: true,
   // }));
   app.use(cookieParser());
-  app.get("/", (_, res) => res.send("boop"));
+  app.get("/", (_, res) => res.send("hello world"));
 
+  // -> Token refresh occurs on its own route parallel to the system boundary of the
+  //    GraphQL API as a security measure.
   app.post(REFRESH_TOKEN_ROUTE, async (req, res) => {
     const token = req.cookies[REFRESH_TOKEN_COOKIE_KEY];
 
@@ -46,7 +48,6 @@ const { REFRESH_TOKEN_SECRET, CLIENT_URL } = process.env;
     if (!user) return res.send({ ok: false, accessToken: null });
 
     if (user.tokenVersion !== payload.tokenVersion) {
-      console.log("booooop");
       return res.send({ ok: false, accessToken: null });
     }
 

@@ -1,7 +1,8 @@
 // -> Beyond codebase
 import { compare, hash } from "bcryptjs";
 import {
-  Arg, Ctx, Field, Int, Mutation, ObjectType, Query, Resolver, UseMiddleware
+  Arg, Ctx, Field, Int, Mutation, ObjectType,
+  Query, Resolver, UseMiddleware
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { verify } from "jsonwebtoken";
@@ -22,23 +23,40 @@ class LoginResponse {
 
 @Resolver()
 export class UserResolver {
+
+
+  // --------- //
+  // - HELLO - //
+  // --------- //
   @Query(() => String)
   hello() {
     return "server is working dawg";
   }
-  
+
+
+  // ------------------- //
+  // - CURRENT USER ID - //
+  // ------------------- //
   @Query(() => String)
   @UseMiddleware(isAuthorized)
   currentUserId(@Ctx() { payload }: Context) {
     return `Current user ID is ${payload?.userId}`;
   }
 
+
+  // --------- //
+  // - USERS - //
+  // --------- //
   @Query(() => [User])
   @UseMiddleware(isAuthorized)
   users() {
     return User.find();
   }
 
+
+  // --------------------- //
+  // - ME (Current user) - //
+  // --------------------- //
   @Query(() => User, { nullable: true })
   @UseMiddleware(isAuthorized) // - DEV NOTE -> Could be overkill to have auth logic in the function if it has to be authorized.
   async Me (@Ctx() context: Context) {
@@ -57,6 +75,10 @@ export class UserResolver {
     }
   }
 
+
+  // ---------------- //
+  // - REGISTRATION - //
+  // ---------------- //
   @Mutation(() => Boolean)
   async register(
     @Arg("email") email: string,
@@ -74,6 +96,10 @@ export class UserResolver {
     return true;
   }
 
+
+  // --------- //
+  // - LOGIN - //
+  // --------- //
   @Mutation(() => LoginResponse)
   async login(
     @Arg("email") email: string,
@@ -91,6 +117,10 @@ export class UserResolver {
     return { accessToken: createAccessToken(user) };
   }
 
+
+  // ---------- //
+  // - LOGOUT - //
+  // ---------- //
   @Mutation(() => Boolean)
   async logout(@Ctx() { res }: Context) {
     console.log("In Logout()");
@@ -99,6 +129,10 @@ export class UserResolver {
     return true;
   }
 
+
+  // -------------------------------------- //
+  // - REVOKE ALL REFRESH TOKENS FOR USER - //
+  // -------------------------------------- //
   @Mutation(() => Boolean)
   async revokeRefreshTokensForUser(
     @Arg("userId", () => Int) userId: number
