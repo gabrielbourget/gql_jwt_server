@@ -1,3 +1,2 @@
-import { isContext } from "vm";
-
 export * from "./Context";
+export * from "./TOTPSecret";
