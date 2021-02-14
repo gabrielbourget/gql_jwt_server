@@ -10,15 +10,24 @@ import { verify } from "jsonwebtoken";
 import { User } from "./entity/User";
 import { Context } from "./Types/Context";
 import {
-  createAccessToken, createRefreshToken, isAuthorized, setRefreshTokenCookie
+  createAccessToken, createRefreshToken, isAuthenticated, setRefreshTokenCookie
 } from "./helpers";
 import { REFRESH_TOKEN_COOKIE_KEY } from "./constants";
+import { ITOTPSecret } from "./Types";
 
 const { ACCESS_TOKEN_SECRET } = process.env;
 @ObjectType()
 class LoginResponse {
   @Field()
   accessToken: string;
+}
+
+@ObjectType()
+class UserMetadata {
+  @Field()
+  temp2FASecret?: ITOTPSecret;
+  @Field()
+  MFASecret?: ITOTPSecret;
 }
 
 @Resolver()
@@ -38,7 +47,7 @@ export class UserResolver {
   // - CURRENT USER ID - //
   // ------------------- //
   @Query(() => String)
-  @UseMiddleware(isAuthorized)
+  @UseMiddleware(isAuthenticated)
   currentUserId(@Ctx() { payload }: Context) {
     return `Current user ID is ${payload?.userId}`;
   }
@@ -48,7 +57,7 @@ export class UserResolver {
   // - USERS - //
   // --------- //
   @Query(() => [User])
-  @UseMiddleware(isAuthorized)
+  @UseMiddleware(isAuthenticated)
   users() {
     return User.find();
   }
@@ -58,7 +67,7 @@ export class UserResolver {
   // - ME (Current user) - //
   // --------------------- //
   @Query(() => User, { nullable: true })
-  @UseMiddleware(isAuthorized) // - DEV NOTE -> Could be overkill to have auth logic in the function if it has to be authorized.
+  @UseMiddleware(isAuthenticated) // - DEV NOTE -> Could be overkill to have auth logic in the function if it has to be authorized.
   async Me (@Ctx() context: Context) {
     const authorization = context.req.headers["authorization"];
 
@@ -68,7 +77,6 @@ export class UserResolver {
       const token = authorization.split(" ")[1];
       const payload: any = verify(token, ACCESS_TOKEN_SECRET!);
       return await User.findOne(payload.userId);
-      return 
     } catch (err) {
       console.log(err);
       return null;
