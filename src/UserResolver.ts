@@ -8,6 +8,7 @@ import { getConnection } from "typeorm";
 import { verify } from "jsonwebtoken";
 import speakeasy from "speakeasy";
 import qrcode from "qrcode";
+// import { authenticator } from "otplib";
 // -> Within codebase
 import { User } from "./entity/User";
 import { Context } from "./Types/Context";
@@ -15,6 +16,7 @@ import {
   createAccessToken, createRefreshToken, isAuthenticated, setRefreshTokenCookie
 } from "./helpers";
 import { REFRESH_TOKEN_COOKIE_KEY, APP_NAME } from "./constants";
+// import { NUM_BYTES_TOTP_SECRET } from "./constants";
 import { generateOTPAuthURL } from "./helpers/generateOTPAuthURL";
 // import { ITOTPSecret } from "./Types";
 
@@ -177,21 +179,24 @@ export class UserResolver {
   @Mutation(() => EnableMFAResponse)
   @UseMiddleware(isAuthenticated)
   async enableMFA(
-    @Arg("userId", () => Int) userId: number
+    @Arg("userId", () => Int) userId: number,
   ): Promise<EnableMFAResponse | boolean> {
-    const user = await User.findOne({ where: { userId }});
-    if (!user) throw new Error("Could not find user");
-
+    
     try {
+      const user = await User.findOne({ where: { userId }});
+      if (!user) throw new Error("Could not find user");
+
       const tempMFASecret = speakeasy.generateSecret({ name: APP_NAME });
+      // -> OTPLIB ALT IMPLEMENTATION PORTION
+      // const temp2FASecret = authenticator.generateSecret(NUM_BYTES_TOTP_SECRET);
       const OTPAuthURL = generateOTPAuthURL(APP_NAME, tempMFASecret.base32);
-  
+
       qrcode.toDataURL(OTPAuthURL, async (err: any, imageURL: string) => {
         if (err) {
           console.error(err);
           return;
         }
-  
+
         const QRCodeURL = imageURL;
         await User.update(userId, { metadata: { tempMFASecret: tempMFASecret.base32 }});
 
@@ -201,7 +206,49 @@ export class UserResolver {
       console.error(err);
       throw new Error("Problem encountered while generating distributing MFA secret");
     }
-    // - TODO: -> Monitor this for problems.
+    // - TODO: -> Monitor this for problems, not sure about control flow since I need to do return
+    //            stuff in the QR Code generation callback, since the codegen is asynchronous.
+    return false;
+  }
+
+
+  // ----------------------------- //
+  // - VERIFY MFA FOR FIRST TIME - //
+  // ----------------------------- //
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuthenticated)
+  async verifyMFA(
+    @Arg("userId", () => Int) userId: number,
+    @Arg("token", () => String) token: string
+  ): Promise<Boolean> {
+
+    try {
+      const user = await User.findOne({ where: { userId }})
+      if (!user) throw new Error("Could now find user");
+
+      const { metadata: { tempMFASecret }} = user;
+
+      // -> This endpoint should never get called before a secret has been disbursed to the user,
+      //    but it's just here in case and to make the Typescript parser happy.
+      if (!tempMFASecret) throw new Error("User has no temp MFA secret");
+
+      // -> OTPLIB ALT IMPLEMENTATION PORTION
+      // const verified = authenticator.check(token, tempMFASecret);
+
+      const verified = speakeasy.totp.verify({
+        secret: tempMFASecret, encoding: "base32", token
+      });
+
+      if (verified) {
+        await User.update(userId, { metadata: { MFASecret: tempMFASecret }});
+
+        return true;
+      }
+    } catch (err) {
+      console.error(err);
+      throw new Error(err);
+    }
+
     return false;
   }
 }

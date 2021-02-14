@@ -11,3 +11,5 @@ export const SERVER_PORT = 4000;
 export const REFRESH_TOKEN_ROUTE = "/refresh_token";
 
 export const APP_NAME = "GraphQL JWT MFA Backend";
+
+export const NUM_BYTES_TOTP_SECRET = 32;
