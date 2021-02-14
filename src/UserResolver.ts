@@ -13,7 +13,7 @@ import {
   createAccessToken, createRefreshToken, isAuthenticated, setRefreshTokenCookie
 } from "./helpers";
 import { REFRESH_TOKEN_COOKIE_KEY } from "./constants";
-import { ITOTPSecret } from "./Types";
+// import { ITOTPSecret } from "./Types";
 
 const { ACCESS_TOKEN_SECRET } = process.env;
 @ObjectType()
@@ -22,13 +22,13 @@ class LoginResponse {
   accessToken: string;
 }
 
-@ObjectType()
-class UserMetadata {
-  @Field()
-  temp2FASecret?: ITOTPSecret;
-  @Field()
-  MFASecret?: ITOTPSecret;
-}
+// @ObjectType()
+// class UserMetadata {
+//   @Field()
+//   temp2FASecret?: ITOTPSecret;
+//   @Field()
+//   MFASecret?: ITOTPSecret;
+// }
 
 @Resolver()
 export class UserResolver {
