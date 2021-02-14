@@ -236,19 +236,51 @@ export class UserResolver {
       // const verified = authenticator.check(token, tempMFASecret);
 
       const verified = speakeasy.totp.verify({
-        secret: tempMFASecret, encoding: "base32", token
+        secret: tempMFASecret, encoding: "base32", token,  window: 1
       });
 
       if (verified) {
         await User.update(userId, { metadata: { MFASecret: tempMFASecret }});
 
         return true;
-      }
+      } else return false;
     } catch (err) {
       console.error(err);
       throw new Error(err);
     }
+  }
 
-    return false;
+  // ------------------------------------ //
+  // - VALIDATE MFA FOR ALL OTHER TIMES - //
+  // ------------------------------------ //
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuthenticated)
+  async validateMFA(
+    @Arg("userId", () => Int) userId: number,
+    @Arg("token", () => String) token: string
+  ): Promise<Boolean> {
+    try {
+      const user = await User.findOne({ where: { userId }})
+      if (!user) throw new Error("Could now find user");
+
+      const { metadata: { MFASecret }} = user;
+
+      // -> This endpoint should never get called before a secret has been disbursed to the user,
+      //    but it's just here in case and to make the Typescript parser happy.
+      if (!MFASecret) throw new Error("User has no temp MFA secret");
+
+      // -> OTPLIB ALT IMPLEMENTATION PORTION
+      // const validated = authenticator.check(token, MFASecret);
+
+      const validated = speakeasy.totp.verify({
+        secret: MFASecret, encoding: "base32", token, window: 1
+      });
+
+      if (validated) return true;
+      else return false;
+    } catch (err) {
+      console.error(err);
+      throw new Error(err);
+    }
   }
 }
