@@ -11,7 +11,7 @@ import { verify } from "jsonwebtoken";
 // -> Within Codebase
 import { UserResolver } from "./UserResolver";
 import { REFRESH_TOKEN_COOKIE_KEY, REFRESH_TOKEN_ROUTE, SERVER_PORT } from "./constants";
-import { User } from "./entities/User";
+import { User } from "./entity/User";
 import { createAccessToken, createRefreshToken, setRefreshTokenCookie } from "./helpers";
 
 // const { REFRESH_TOKEN_SECRET } = process.env;

@@ -9,3 +9,5 @@ export const REFRESH_TOKEN_COOKIE_KEY = "rt";
 export const SERVER_PORT = 4000;
 
 export const REFRESH_TOKEN_ROUTE = "/refresh_token";
+
+export const APP_NAME = "GraphQL JWT MFA Backend";

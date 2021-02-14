@@ -1,6 +1,6 @@
 import { sign } from "jsonwebtoken";
 import { ACCESS_JWT_LIFETIME } from "../constants";
-import { User } from "../entities/User";
+import { User } from "../entity/User";
 
 const { ACCESS_TOKEN_SECRET } = process.env;
 

@@ -6,13 +6,16 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { verify } from "jsonwebtoken";
+import speakeasy from "speakeasy";
+import qrcode from "qrcode";
 // -> Within codebase
-import { User } from "./entities/User";
+import { User } from "./entity/User";
 import { Context } from "./Types/Context";
 import {
   createAccessToken, createRefreshToken, isAuthenticated, setRefreshTokenCookie
 } from "./helpers";
-import { REFRESH_TOKEN_COOKIE_KEY } from "./constants";
+import { REFRESH_TOKEN_COOKIE_KEY, APP_NAME } from "./constants";
+import { generateOTPAuthURL } from "./helpers/generateOTPAuthURL";
 // import { ITOTPSecret } from "./Types";
 
 const { ACCESS_TOKEN_SECRET } = process.env;
@@ -20,6 +23,15 @@ const { ACCESS_TOKEN_SECRET } = process.env;
 class LoginResponse {
   @Field()
   accessToken: string;
+}
+
+@ObjectType()
+class EnableMFAResponse {
+  @Field()
+  secret: string;
+
+  @Field()
+  QRCodeURL: string;
 }
 
 // @ObjectType()
@@ -95,7 +107,13 @@ export class UserResolver {
     const hashedPassword = await hash(password, 12);
 
     try {
-      await User.insert({ email, password: hashedPassword });
+      await User.insert({
+        email, password: hashedPassword,
+        metadata: {
+          tempMFASecret: undefined,
+          MFASecret: undefined,
+        }
+      });
     } catch (err) {
       console.log(err);
       return false;
@@ -150,5 +168,40 @@ export class UserResolver {
       .increment({ id: userId }, "tokenVersion", 1)
 
     return true;
+  }
+
+
+  // ---------------------------- //
+  // - ENABLE MULTI-FACTOR AUTH - //
+  // ---------------------------- //
+  @Query(() => EnableMFAResponse)
+  @UseMiddleware(isAuthenticated)
+  async enableMFA(
+    @Arg("userId", () => Int) userId: number
+  ): Promise<EnableMFAResponse | boolean> {
+    const user = await User.findOne({ where: { userId }});
+    if (!user) throw new Error("Could not find user");
+
+    try {
+      const tempMFASecret = speakeasy.generateSecret({ name: APP_NAME });
+      const OTPAuthURL = generateOTPAuthURL(APP_NAME, tempMFASecret.base32);
+  
+      qrcode.toDataURL(OTPAuthURL, async (err: any, imageURL: string) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+  
+        const QRCodeURL = imageURL;
+        await User.update(userId, { metadata: { tempMFASecret: tempMFASecret.base32 }});
+
+        return { secret: tempMFASecret.base32, QRCodeURL };
+      });
+    } catch(err) {
+      console.error(err);
+      throw new Error("Problem encountered while generating distributing MFA secret");
+    }
+    // - TODO: -> Monitor this for problems.
+    return false;
   }
 }

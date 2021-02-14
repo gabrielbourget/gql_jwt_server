@@ -12,7 +12,7 @@ import { UserMetadata } from "./UserMetadata";
 @Entity("Users")
 export class User extends BaseEntity {
     @Field(() => Int)
-    @PrimaryGeneratedColumn("uuid")
+    @PrimaryGeneratedColumn()
     id: number;
 
     @Field()
