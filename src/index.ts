@@ -11,7 +11,7 @@ import { verify } from "jsonwebtoken";
 // -> Within Codebase
 import { UserResolver } from "./UserResolver";
 import { REFRESH_TOKEN_COOKIE_KEY, REFRESH_TOKEN_ROUTE, SERVER_PORT } from "./constants";
-import { User } from "./entity/User";
+import { User } from "./entities/User";
 import { createAccessToken, createRefreshToken, setRefreshTokenCookie } from "./helpers";
 
 // const { REFRESH_TOKEN_SECRET } = process.env;
@@ -64,7 +64,8 @@ const { REFRESH_TOKEN_SECRET, CLIENT_URL } = process.env;
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [UserResolver]
+      resolvers: [UserResolver],
+      dateScalarMode: "timestamp"
     }),
     context: ({ req, res }) => ({ req, res })
   });

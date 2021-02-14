@@ -7,7 +7,7 @@ import {
 import { getConnection } from "typeorm";
 import { verify } from "jsonwebtoken";
 // -> Within codebase
-import { User } from "./entity/User";
+import { User } from "./entities/User";
 import { Context } from "./Types/Context";
 import {
   createAccessToken, createRefreshToken, isAuthenticated, setRefreshTokenCookie

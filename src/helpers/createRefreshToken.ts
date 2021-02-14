@@ -1,6 +1,6 @@
 import { sign } from "jsonwebtoken";
 import { REFRESH_JWT_LIFETIME } from "../constants";
-import { User } from "../entity/User";
+import { User } from "../entities/User";
 
 const { REFRESH_TOKEN_SECRET } = process.env;
 

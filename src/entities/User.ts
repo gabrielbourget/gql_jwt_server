@@ -4,7 +4,7 @@ import {
   Entity, PrimaryGeneratedColumn, Column, BaseEntity
 } from "typeorm";
 // -> Within codebase
-// import { IUserMetadata } from "../Types";
+import { UserMetadata } from "./UserMetadata";
 
 // - TODO: -> Figure out how to embed user metadata as a composite type, instead of
 //            just spreading out all properties across this data structure.
@@ -12,7 +12,7 @@ import {
 @Entity("Users")
 export class User extends BaseEntity {
     @Field(() => Int)
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: number;
 
     @Field()
@@ -25,9 +25,7 @@ export class User extends BaseEntity {
     @Column("int", { default: 0 })
     tokenVersion: number;
 
-    @Column("text")
-    temp2FASecret?: string;
-
-    @Column("text")
-    MFASecret?: string;
+    @Field(() => UserMetadata)
+    @Column(() => UserMetadata)
+    metadata: UserMetadata;
 }
