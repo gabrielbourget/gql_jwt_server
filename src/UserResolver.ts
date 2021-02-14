@@ -174,7 +174,7 @@ export class UserResolver {
   // ---------------------------- //
   // - ENABLE MULTI-FACTOR AUTH - //
   // ---------------------------- //
-  @Query(() => EnableMFAResponse)
+  @Mutation(() => EnableMFAResponse)
   @UseMiddleware(isAuthenticated)
   async enableMFA(
     @Arg("userId", () => Int) userId: number
