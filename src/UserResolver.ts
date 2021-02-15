@@ -36,17 +36,8 @@ class EnableMFAResponse {
   QRCodeURL: string;
 }
 
-// @ObjectType()
-// class UserMetadata {
-//   @Field()
-//   temp2FASecret?: ITOTPSecret;
-//   @Field()
-//   MFASecret?: ITOTPSecret;
-// }
-
 @Resolver()
 export class UserResolver {
-
 
   // --------- //
   // - HELLO - //
@@ -81,7 +72,7 @@ export class UserResolver {
   // - ME (Current user) - //
   // --------------------- //
   @Query(() => User, { nullable: true })
-  @UseMiddleware(isAuthenticated) // - DEV NOTE -> Could be overkill to have auth logic in the function if it has to be authorized.
+  @UseMiddleware(isAuthenticated)
   async Me (@Ctx() context: Context) {
     const authorization = context.req.headers["authorization"];
 
@@ -110,11 +101,9 @@ export class UserResolver {
 
     try {
       await User.insert({
-        email, password: hashedPassword,
-        metadata: {
-          tempMFASecret: undefined,
-          MFASecret: undefined,
-        }
+        email,
+        password: hashedPassword,
+        tokenVersion: 0,
       });
     } catch (err) {
       console.log(err);
@@ -167,7 +156,7 @@ export class UserResolver {
   ) {
     await getConnection()
       .getRepository(User)
-      .increment({ id: userId }, "tokenVersion", 1)
+      .increment({ id: userId }, "tokenVersion", 1);
 
     return true;
   }
@@ -198,7 +187,7 @@ export class UserResolver {
         }
 
         const QRCodeURL = imageURL;
-        await User.update(userId, { metadata: { tempMFASecret: tempMFASecret.base32 }});
+        await User.update(userId, { tempMFASecret: tempMFASecret.base32 });
 
         return { secret: tempMFASecret.base32, QRCodeURL };
       });
@@ -226,7 +215,7 @@ export class UserResolver {
       const user = await User.findOne({ where: { userId }})
       if (!user) throw new Error("Could now find user");
 
-      const { metadata: { tempMFASecret }} = user;
+      const { tempMFASecret } = user;
 
       // -> This endpoint should never get called before a secret has been disbursed to the user,
       //    but it's just here in case and to make the Typescript parser happy.
@@ -240,8 +229,7 @@ export class UserResolver {
       });
 
       if (verified) {
-        await User.update(userId, { metadata: { MFASecret: tempMFASecret }});
-
+        await User.update(userId, { MFASecret: tempMFASecret, tempMFASecret: undefined });
         return true;
       } else return false;
     } catch (err) {
@@ -263,7 +251,7 @@ export class UserResolver {
       const user = await User.findOne({ where: { userId }})
       if (!user) throw new Error("Could now find user");
 
-      const { metadata: { MFASecret }} = user;
+      const { MFASecret } = user;
 
       // -> This endpoint should never get called before a secret has been disbursed to the user,
       //    but it's just here in case and to make the Typescript parser happy.

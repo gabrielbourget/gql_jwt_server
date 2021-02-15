@@ -16,4 +16,7 @@ export class UserMetadata {
   @Field()
   @Column("text", { nullable: true })
   MFASecret?: string;
+
+  @Column("int", { default: 0 })
+  tokenVersion: number;
 }
