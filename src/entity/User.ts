@@ -25,6 +25,9 @@ export class User extends BaseEntity {
     @Column("int", { default: 0 })
     tokenVersion: number;
 
+    // - TODO: -> Check back on this issue periodically to see if Embedded Entities
+    //            can be defined as potentially nullable yet.
+    //            https://github.com/typeorm/typeorm/issues/5787
     @Field(() => UserMetadata)
     @Column(() => UserMetadata)
     metadata: UserMetadata;
